@@ -8,13 +8,15 @@
       "route": "西线巡测",
       "sensitivity": "高",
       "protectedStatus": "重点保护",
+      "floodWarnLevel": 60,
       "baselineTemp": 16.2,
       "baselineHumidity": 92,
       "baselineCo2": 680,
-      "note": "游客步道上方，滴水频率稳定",
+      "note": "游客步道上方，滴水频率稳定；雨季上游来水必经洞口",
       "createdAt": "2026-06-14T08:00:00.000Z",
-      "updatedAt": "2026-06-14T08:00:00.000Z",
+      "updatedAt": "2026-09-24T02:10:00.000Z",
       "history": [
+        { "at": "2026-09-24T02:10:00.000Z", "action": "警戒线更正", "note": "洞口水位警戒线 80cm → 60cm" },
         { "at": "2026-06-14T08:00:00.000Z", "action": "创建", "note": "样点建档" }
       ]
     }
@@ -37,6 +39,84 @@
       "updatedAt": "2026-06-18T10:00:00.000Z",
       "history": [
         { "at": "2026-06-18T10:00:00.000Z", "action": "创建", "note": "CO2升高并有干扰痕迹" }
+      ]
+    }
+  ],
+  "floodReports": [
+    {
+      "id": "floodReport-seed-1",
+      "siteId": "site-seed-1",
+      "waterLevel": 64,
+      "riseRate": 9,
+      "dutyOfficer": "沈宁",
+      "observedAt": "2026-09-25T01:20:00.000Z",
+      "note": "上游持续降雨，暗河水声明显",
+      "eventId": "floodEvent-seed-1",
+      "corrected": false,
+      "createdAt": "2026-09-25T01:20:00.000Z",
+      "updatedAt": "2026-09-25T01:20:00.000Z",
+      "history": [
+        { "at": "2026-09-25T01:20:00.000Z", "action": "登记水情", "note": "洞口水位 64cm，当班人 沈宁" }
+      ]
+    },
+    {
+      "id": "floodReport-seed-2",
+      "siteId": "site-seed-1",
+      "waterLevel": 71,
+      "riseRate": 14,
+      "dutyOfficer": "何屿",
+      "observedAt": "2026-09-25T02:05:00.000Z",
+      "note": "水位继续上涨，电话通知洞口值守",
+      "eventId": "floodEvent-seed-1",
+      "corrected": false,
+      "createdAt": "2026-09-25T02:05:00.000Z",
+      "updatedAt": "2026-09-25T02:05:00.000Z",
+      "history": [
+        { "at": "2026-09-25T02:05:00.000Z", "action": "登记水情", "note": "洞口水位 71cm，当班人 何屿" }
+      ]
+    }
+  ],
+  "floodEvents": [
+    {
+      "id": "floodEvent-seed-1",
+      "siteId": "site-seed-1",
+      "status": "未结束",
+      "openedAt": "2026-09-25T01:20:00.000Z",
+      "closedAt": null,
+      "clearBy": null,
+      "warnLevelSnapshot": 60,
+      "peakLevel": 71,
+      "latestLevel": 71,
+      "latestRate": 14,
+      "latestAt": "2026-09-25T02:05:00.000Z",
+      "latestOfficer": "何屿",
+      "reportIds": ["floodReport-seed-1", "floodReport-seed-2"],
+      "reportCount": 2,
+      "roster": [
+        { "id": "person-seed-1", "name": "罗勤（访客）", "checked": true, "checkedBy": "何屿", "checkedAt": "2026-09-25T02:20:00.000Z" },
+        { "id": "person-seed-2", "name": "高枫（访客）", "checked": false, "checkedBy": null, "checkedAt": null },
+        { "id": "person-seed-3", "name": "闻笛（测绘）", "checked": false, "checkedBy": null, "checkedAt": null }
+      ],
+      "caveSealed": true,
+      "sealedBy": "何屿",
+      "sealedAt": "2026-09-25T02:15:00.000Z",
+      "retestLevel": null,
+      "retestBy": null,
+      "retestAt": null,
+      "conclusion": "达警戒",
+      "conclusionBasis": "最新上报",
+      "conclusionLevel": 71,
+      "conclusionReason": "最新上报水位 71cm ≥ 警戒线 60cm",
+      "conclusionAt": "2026-09-25T02:05:00.000Z",
+      "createdAt": "2026-09-25T01:20:00.000Z",
+      "updatedAt": "2026-09-25T02:20:00.000Z",
+      "history": [
+        { "at": "2026-09-25T02:20:00.000Z", "action": "逐人核销", "note": "罗勤（访客）（值班员 何屿），还差 2 人" },
+        { "at": "2026-09-25T02:15:00.000Z", "action": "封洞", "note": "值班员 何屿" },
+        { "at": "2026-09-25T02:05:00.000Z", "action": "结论判定", "note": "达警戒 → 达警戒（第 2 报并入累加）" },
+        { "at": "2026-09-25T02:05:00.000Z", "action": "重复上报归并", "note": "第 2 报：洞口水位 71cm，上涨速率 14cm/h，当班人 何屿" },
+        { "at": "2026-09-25T01:20:00.000Z", "action": "结论判定", "note": "无 → 达警戒（首报达到警戒线）" },
+        { "at": "2026-09-25T01:20:00.000Z", "action": "建立汛情单", "note": "首报水位 64cm 达到警戒线 60cm，当班人 沈宁" }
       ]
     }
   ]

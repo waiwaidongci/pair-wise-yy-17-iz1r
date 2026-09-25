@@ -4,6 +4,7 @@ const path = require('path');
 
 const app = express();
 const config = require('./project.config');
+const flood = require('./lib/flood');
 const PORT = process.env.PORT || config.port || 3900;
 const DB_FILE = path.join(__dirname, 'data', 'db.json');
 
@@ -43,6 +44,31 @@ app.get('/api/db', async (req, res) => {
   res.json(db);
 });
 
+// ---- 汛情接力台：规则集中在 lib/flood.js，此处只做参数与存取 ----
+
+function floodHandler(handler) {
+  return async (req, res) => {
+    const db = await readDb();
+    const result = handler(db, req.params.id, req.body || {});
+    if (result.error) return res.status(409).json({ error: result.error });
+    await writeDb(db);
+    res.status(req.method === 'POST' && !req.params.id ? 201 : 200).json(result);
+  };
+}
+
+app.post('/api/flood/reports', floodHandler((db, _id, body) => {
+  const result = flood.intakeReport(db, body);
+  if (result.error) return result;
+  return { report: result.report, event: result.event, opened: result.opened };
+}));
+
+app.patch('/api/flood/reports/:id', floodHandler((db, id, body) => flood.correctReport(db, id, body)));
+app.post('/api/flood/events/:id/roster', floodHandler((db, id, body) => flood.addRosterPerson(db, id, body)));
+app.post('/api/flood/events/:id/checkoff', floodHandler((db, id, body) => flood.checkoff(db, id, body)));
+app.post('/api/flood/events/:id/seal', floodHandler((db, id, body) => flood.setSealed(db, id, body)));
+app.post('/api/flood/events/:id/retest', floodHandler((db, id, body) => flood.recordRetest(db, id, body)));
+app.post('/api/flood/events/:id/clear', floodHandler((db, id, body) => flood.clearEvent(db, id, body)));
+
 app.post('/api/:collection', async (req, res) => {
   const db = await readDb();
   const { collection } = req.params;
@@ -68,13 +94,22 @@ app.patch('/api/:collection/:id', async (req, res) => {
   if (!item) return res.status(404).json({ error: 'not found' });
   const historyAction = req.body.historyAction;
   delete req.body.historyAction;
+  const warnCorrection = collection === 'sites'
+    && Object.prototype.hasOwnProperty.call(req.body, 'floodWarnLevel')
+    && Number(req.body.floodWarnLevel) !== Number(item.floodWarnLevel);
+  const oldWarn = item.floodWarnLevel;
   Object.assign(item, req.body, { updatedAt: new Date().toISOString() });
   item.history = item.history || [];
+  if (warnCorrection) {
+    item.history.unshift(stamp('警戒线更正', `洞口水位警戒线 ${oldWarn}cm → ${item.floodWarnLevel}cm`));
+  }
   if (historyAction || req.body.note || req.body.memo || req.body.status) {
     item.history.unshift(stamp(historyAction || req.body.status || '更新', req.body.note || req.body.memo || ''));
   }
+  let affectedEvents = [];
+  if (warnCorrection) affectedEvents = flood.afterWarnCorrected(db, item, oldWarn);
   await writeDb(db);
-  res.json(item);
+  res.json(affectedEvents.length ? { item, rejudged: affectedEvents } : item);
 });
 
 app.delete('/api/:collection/:id', async (req, res) => {

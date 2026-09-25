@@ -58,6 +58,12 @@ button.ghost {
   border: 1px solid var(--line);
 }
 
+button.small {
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
 button.danger {
   background: var(--bad);
 }
@@ -307,6 +313,169 @@ main {
   background: #fff;
   border: 1px dashed var(--line);
   border-radius: 8px;
+}
+
+/* 汛情接力台 */
+.flood-card .sub {
+  margin-top: 12px;
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
+
+.flood-card .sub h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.conclusion {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #f7f3eb;
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-size: 13px;
+}
+
+.conclusion.bad {
+  background: rgba(161, 61, 61, .08);
+}
+
+.conclusion.warn {
+  background: rgba(163, 92, 0, .09);
+}
+
+.conclusion.ok {
+  background: rgba(38, 115, 77, .09);
+}
+
+.report-list {
+  display: grid;
+  gap: 8px;
+}
+
+.report-row {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.report-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.report-line > span:first-child {
+  color: var(--muted);
+}
+
+.report-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.report-edit input {
+  width: auto;
+  flex: 1 1 130px;
+}
+
+.roster-bar,
+.operator-line,
+.retest-line,
+.seal-line .operator-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.roster-bar input,
+.operator-line input,
+.retest-line input {
+  width: auto;
+  flex: 1 1 150px;
+}
+
+ul.roster {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+ul.roster li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 13px;
+  background: #fff;
+}
+
+ul.roster li.checked {
+  background: #f3f1ea;
+  color: var(--muted);
+}
+
+.alert-badge {
+  margin-top: 8px;
+  display: inline-block;
+  background: rgba(161, 61, 61, .12);
+  color: var(--bad);
+  font-weight: 800;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.ok-badge {
+  display: inline-block;
+  background: rgba(38, 115, 77, .12);
+  color: var(--ok);
+  font-weight: 800;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.clear-panel {
+  background: rgba(17, 97, 92, .05);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.standalone {
+  margin-top: 18px;
+}
+
+.warn-edit {
+  margin-top: 10px;
+}
+
+.warn-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.warn-form input {
+  width: auto;
+  flex: 1 1 140px;
 }
 
 .toast {
