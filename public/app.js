@@ -130,21 +130,26 @@ function renderStats() {
 }
 
 function renderCard(item, collection, view) {
-  const title = view.titleFields.map((field) => item[field]).filter(Boolean).join(' / ') || item.id;
-  const statusValue = item[view.statusField];
+  const title = (view.titleFields || []).map((field) => item[field]).filter(Boolean).join(' / ') || item.id;
+  const statusValue = view.statusField ? item[view.statusField] : '';
+  const extraValue = view.extraStatusField ? item[view.extraStatusField] : '';
   const relation = view.relation ? `<div class="meta">${escapeHtml(relationLabel(view.relation, item[view.relation.localKey]))}</div>` : '';
   const details = (view.detailFields || []).map((field) => {
     const raw = item[field.name];
-    const value = field.type === 'relation' ? relationLabel(field, raw) : raw;
-    return `<div>${escapeHtml(field.label)}<br><strong>${escapeHtml(value || '-')}</strong></div>`;
+    let value = field.type === 'relation' ? relationLabel(field, raw) : raw;
+    if (field.type === 'datetime') value = raw ? fmtDate(raw) : '';
+    const has = value !== '' && value !== null && value !== undefined;
+    const emphasize = field.emphasize && Number(value) > 0;
+    return `<div class="${emphasize ? 'em' : ''}">${escapeHtml(field.label)}<br><strong>${escapeHtml(has ? `${value}${field.suffix || ''}` : '-')}</strong></div>`;
   }).join('');
   const summary = (view.summaryFields || []).map((field) => item[field]).filter(Boolean).join(' · ');
   const actions = state.config.actions
     .filter((action) => action.collection === collection)
+    .filter((action) => !action.visibleWhen || action.visibleWhen.values.includes(item[action.visibleWhen.field]))
     .map((action) => `<button class="${action.danger ? 'danger' : 'ghost'}" data-action="${action.id}" data-id="${item.id}">${escapeHtml(action.label)}</button>`)
     .join('');
   return `<article class="card">
-    <div class="card-head"><h3>${escapeHtml(title)}</h3>${statusValue ? pill(statusValue, toneFor(statusValue)) : ''}</div>
+    <div class="card-head"><h3>${escapeHtml(title)}</h3><div class="pills">${statusValue ? pill(statusValue, toneFor(statusValue)) : ''}${extraValue ? pill(extraValue, toneFor(extraValue)) : ''}</div></div>
     ${relation}
     ${summary ? `<p>${escapeHtml(summary)}</p>` : ''}
     ${details ? `<div class="detail">${details}</div>` : ''}
@@ -181,13 +186,14 @@ function renderDashboardView(view) {
 
 function renderCrudView(view) {
   const statusOptions = view.statusOptions || [];
+  const formHtml = view.noForm ? '' : `<form class="panel" data-create="${view.collection}" data-view="${view.id}">
+      <h2>${escapeHtml(view.formTitle)}</h2>
+      <div class="form-grid">${view.fields.map(formField).join('')}</div>
+      <div class="actions"><button>${escapeHtml(view.submitLabel || '保存')}</button></div>
+    </form>`;
   return `<section class="view" id="${view.id}">
-    <div class="grid">
-      <form class="panel" data-create="${view.collection}" data-view="${view.id}">
-        <h2>${escapeHtml(view.formTitle)}</h2>
-        <div class="form-grid">${view.fields.map(formField).join('')}</div>
-        <div class="actions"><button>${escapeHtml(view.submitLabel || '保存')}</button></div>
-      </form>
+    <div class="grid${view.noForm ? ' single' : ''}">
+      ${formHtml}
       <div class="panel">
         <h2>${escapeHtml(view.listTitle)}</h2>
         <div class="toolbar">
@@ -203,11 +209,37 @@ function renderCrudView(view) {
   </section>`;
 }
 
+function renderRelayView(view) {
+  const events = (state.db.floodEvents || []).filter((event) => event.status !== '已销警');
+  const reports = (state.db[view.collection] || []).slice(0, view.logLimit || 10);
+  return `<section class="view" id="${view.id}">
+    <div class="grid">
+      <form class="panel" data-create="${view.collection}" data-view="${view.id}">
+        <h2>${escapeHtml(view.formTitle)}</h2>
+        <div class="form-grid">${view.fields.map(formField).join('')}</div>
+        <div class="actions"><button>${escapeHtml(view.submitLabel || '保存')}</button></div>
+      </form>
+      <div class="panel">
+        <h2>${escapeHtml(view.eventsTitle)}</h2>
+        <div class="list">${events.length ? events.map((event) => renderCard(event, 'floodEvents', view.eventView)).join('') : '<div class="empty">暂无未结束汛情</div>'}</div>
+      </div>
+    </div>
+    <div class="panel relay-log">
+      <h2>${escapeHtml(view.logTitle)}</h2>
+      <div class="list">${reports.length ? reports.map((report) => renderCard(report, view.collection, view.logView)).join('') : '<div class="empty">暂无上报记录</div>'}</div>
+    </div>
+  </section>`;
+}
+
 function render() {
   $('#title').textContent = state.config.title;
   document.title = state.config.title;
   $('#lede').textContent = state.config.lede;
-  $('#main').innerHTML = state.config.views.map((view) => view.type === 'dashboard' ? renderDashboardView(view) : renderCrudView(view)).join('');
+  $('#main').innerHTML = state.config.views.map((view) => {
+    if (view.type === 'dashboard') return renderDashboardView(view);
+    if (view.type === 'relay') return renderRelayView(view);
+    return renderCrudView(view);
+  }).join('');
   setTab(state.activeTab || state.config.views[0].id);
 }
 
@@ -218,11 +250,30 @@ async function load() {
 
 document.addEventListener('click', async (event) => {
   const tab = event.target.closest('.tab');
-  const action = event.target.closest('[data-action]');
+  const button = event.target.closest('[data-action]');
   if (tab) setTab(tab.dataset.tab);
-  if (action) {
+  if (button) {
+    const action = state.config.actions.find((entry) => entry.id === button.dataset.action);
+    const body = {};
+    if (action?.prompt) {
+      const input = window.prompt(action.prompt.message);
+      if (input === null) return;
+      if (action.prompt.type === 'number') {
+        if (input.trim() === '' || Number.isNaN(Number(input))) {
+          toast('请输入数字');
+          return;
+        }
+        body[action.prompt.field] = Number(input);
+      } else {
+        if (!input.trim()) {
+          toast('请输入内容');
+          return;
+        }
+        body[action.prompt.field] = input.trim();
+      }
+    }
     try {
-      await api(`/api/action/${action.dataset.action}/${action.dataset.id}`, { method: 'POST' });
+      await api(`/api/action/${button.dataset.action}/${button.dataset.id}`, { method: 'POST', body: JSON.stringify(body) });
       await load();
       toast('已更新');
     } catch (error) {
@@ -241,10 +292,10 @@ document.addEventListener('submit', async (event) => {
   if (!form) return;
   event.preventDefault();
   const view = state.config.views.find((entry) => entry.id === form.dataset.view);
-  await api(`/api/${form.dataset.create}`, { method: 'POST', body: JSON.stringify(values(form, view)) });
+  const created = await api(`/api/${form.dataset.create}`, { method: 'POST', body: JSON.stringify(values(form, view)) });
   form.reset();
   await load();
-  toast('已保存');
+  toast(created?.result ? `已保存：${created.result}` : '已保存');
 });
 
 $('#refreshBtn').addEventListener('click', () => load().then(() => toast('已刷新')));

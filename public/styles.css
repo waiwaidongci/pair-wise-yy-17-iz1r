@@ -300,6 +300,25 @@ main {
   font-size: 13px;
 }
 
+.pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.grid.single {
+  grid-template-columns: 1fr;
+}
+
+.relay-log {
+  margin-top: 18px;
+}
+
+.detail div.em strong {
+  color: var(--bad);
+}
+
 .empty {
   color: var(--muted);
   padding: 24px;
